@@ -1,6 +1,6 @@
 mod camera;
-mod util;
 mod text;
+mod util;
 
 use std::time::{Duration, Instant};
 
