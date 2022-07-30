@@ -1,4 +1,8 @@
 mod camera;
+mod util;
+mod text;
+
+use std::time::{Duration, Instant};
 
 use camera::Camera;
 use pollster::block_on;
@@ -9,6 +13,8 @@ use winit::{
     window::WindowBuilder,
 };
 
+const FPS: f64 = 60.0;
+
 fn main() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
@@ -16,8 +22,13 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut graphics = block_on(Graphics::new(&window)).unwrap();
-    let camera = Camera::new(&graphics);
+    let mut gfx = block_on(Graphics::new(&window)).unwrap();
+    let camera = Camera::new(&gfx);
+
+    let pipeline1 = util::pipeline1(&gfx);
+
+    let target_framerate = Duration::from_secs_f64(1.0 / FPS);
+    let mut time = Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -28,7 +39,7 @@ fn main() {
                 | winit::event::WindowEvent::ScaleFactorChanged {
                     new_inner_size: &mut inner_size,
                     ..
-                } => graphics.resize(inner_size),
+                } => gfx.resize(inner_size),
                 winit::event::WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit
                 }
@@ -44,8 +55,61 @@ fn main() {
                 _ => (),
             },
             winit::event::Event::DeviceEvent { event, .. } => (),
-            winit::event::Event::MainEventsCleared => (),
-            winit::event::Event::RedrawRequested(_) => (),
+            winit::event::Event::MainEventsCleared => {
+                let elapsed = time.elapsed();
+                if elapsed >= target_framerate {
+                    window.request_redraw();
+                    time = Instant::now();
+                } else {
+                    *control_flow = ControlFlow::WaitUntil(
+                        Instant::now() + target_framerate - elapsed,
+                    );
+                }
+            }
+            winit::event::Event::RedrawRequested(_) => {
+                let frame = gfx.surface.get_current_texture().unwrap();
+                let view = frame
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
+
+                let mut encoder = gfx.device.create_command_encoder(
+                    &wgpu::CommandEncoderDescriptor {
+                        label: Some("Command Encoder"),
+                    },
+                );
+
+                {
+                    let mut rpass = encoder.begin_render_pass(
+                        &wgpu::RenderPassDescriptor {
+                            label: Some("Render Pass"),
+                            color_attachments: &[Some(
+                                wgpu::RenderPassColorAttachment {
+                                    view: &view,
+                                    resolve_target: None,
+                                    ops: wgpu::Operations {
+                                        load: wgpu::LoadOp::Clear(
+                                            wgpu::Color {
+                                                r: 0.1,
+                                                g: 0.2,
+                                                b: 0.3,
+                                                a: 1.,
+                                            },
+                                        ),
+                                        store: true,
+                                    },
+                                },
+                            )],
+                            depth_stencil_attachment: None,
+                        },
+                    );
+
+                    rpass.set_pipeline(&pipeline1);
+                    rpass.draw(0..4, 0..todo!());
+                }
+
+                gfx.queue.submit(Some(encoder.finish()));
+                frame.present();
+            }
             _ => (),
         }
     });
@@ -123,48 +187,5 @@ impl Graphics {
         self.config.width = new_size.width.max(1);
         self.config.height = new_size.height.max(1);
         self.surface.configure(&self.device, &self.config);
-    }
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    top_left: [f32; 3],
-    bottom_right: [f32; 2],
-    tex_top_left: [f32; 2],
-    tex_bottom_right: [f32; 2],
-}
-
-impl Vertex {
-    fn buffer_layout() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x3,
-                    offset: 0,
-                    shader_location: 0,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 3]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 1,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 5]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 2,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 7]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 3,
-                },
-            ],
-        }
     }
 }

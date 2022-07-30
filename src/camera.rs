@@ -108,15 +108,15 @@ impl CameraController {
         CameraController {
             speed: 0.04,
             sensitivity: 0.1,
-            forward: 0.,
-            backward: 0.,
-            left: 0.,
-            right: 0.,
-            up: 0.,
-            down: 0.,
+            forward: 0.0,
+            backward: 0.0,
+            left: 0.0,
+            right: 0.0,
+            up: 0.0,
+            down: 0.0,
             yaw: 270.0,
             pitch: 0.0,
-            fov_delta: 0.,
+            fov_delta: 0.0,
         }
     }
 
