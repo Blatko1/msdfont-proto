@@ -9,8 +9,13 @@ edition = "2021"
 wgpu = "0.13.1"
 winit = "0.26.1"
 pollster = "0.2.5"
-nalgebra = "0.31.0"
+nalgebra = "0.31.1"
+env_logger = "0.9.0"
 
 [dependencies.bytemuck]
 version = "1.11.0"
 features = ["derive"]
+
+[dependencies.artery-font]
+version = "1.0.1"
+features = ["png"]

@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use crate::util::Quad;
+use artery_font::Rect;
+use wgpu::util::DeviceExt;
 
-struct Text {
+use crate::{util::Quad, Graphics};
+
+pub struct Text {
     x: f32,
     y: f32,
     z: f32,
@@ -19,7 +22,11 @@ impl Text {
         }
     }
 
-    pub fn to_vertices(&self, glyphs: &HashMap<u32, Glyph>) -> Vec<Quad> {
+    pub fn create_buffer(
+        &self,
+        gfx: &Graphics,
+        glyphs: &HashMap<u32, Glyph>,
+    ) -> (wgpu::Buffer, u32) {
         let mut result = Vec::new();
         let mut chars = self.text.chars();
 
@@ -43,7 +50,7 @@ impl Text {
         };
         result.push(vertex);
 
-        for n in 1..self.text.len() {
+        for _ in 1..self.text.len() {
             let glyph = glyphs.get(&(chars.next().unwrap() as u32)).unwrap();
             let x1 = temp_right + glyph.advance_x;
             let y1 = self.y + glyph.plane_bounds.top;
@@ -63,6 +70,20 @@ impl Text {
             result.push(vertex);
         }
 
-        result
+        let buffer =
+            gfx.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Text Buffer"),
+                    contents: bytemuck::cast_slice(&result),
+                    usage: wgpu::BufferUsages::VERTEX,
+                });
+
+        (buffer, result.len() as u32)
     }
+}
+
+pub struct Glyph {
+    pub advance_x: f32,
+    pub plane_bounds: Rect,
+    pub atlas_bounds: Rect,
 }

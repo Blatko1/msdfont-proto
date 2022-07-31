@@ -6,6 +6,8 @@ use std::time::{Duration, Instant};
 
 use camera::Camera;
 use pollster::block_on;
+use text::Text;
+use util::Requisites;
 use winit::{
     dpi::PhysicalSize,
     event::{ElementState, KeyboardInput, VirtualKeyCode},
@@ -16,17 +18,33 @@ use winit::{
 const FPS: f64 = 60.0;
 
 fn main() {
+    if std::env::var("RUST_LOG").is_err() {
+        std::env::set_var("RUST_LOG", "error");
+    }
+    env_logger::init();
+
+    ///////////////////////////////// Create Window ///////////////////////////
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_title("SDF Text Renderer Prototype")
         .build(&event_loop)
         .unwrap();
 
+    ///////////// Initialize GPU, MSDF font and other prerequisites. //////////
     let mut gfx = block_on(Graphics::new(&window)).unwrap();
-    let camera = Camera::new(&gfx);
+    let arfont = artery_font::ArteryFont::read(
+        &include_bytes!("../fonts/font.arfont")[..],
+    )
+    .unwrap();
+    let mut camera = Camera::new(&gfx);
+    let reqs = Requisites::init(&gfx, &arfont);
 
-    let pipeline1 = util::pipeline1(&gfx);
+    let pipeline1 = util::pipeline1(&gfx, &reqs);
 
+    let text = Text::new("TEST", (0.0, 0.0, 0.0));
+    let (vertex_buffer, vertices) = text.create_buffer(&gfx, &reqs.glyphs);
+
+    /////////////////////////////// LOOP ///////////////////////////////////////
     let target_framerate = Duration::from_secs_f64(1.0 / FPS);
     let mut time = Instant::now();
 
@@ -39,7 +57,10 @@ fn main() {
                 | winit::event::WindowEvent::ScaleFactorChanged {
                     new_inner_size: &mut inner_size,
                     ..
-                } => gfx.resize(inner_size),
+                } => {
+                    gfx.resize(inner_size);
+                    camera.resize(&gfx);
+                }
                 winit::event::WindowEvent::CloseRequested => {
                     *control_flow = ControlFlow::Exit
                 }
@@ -54,7 +75,9 @@ fn main() {
                 } => *control_flow = ControlFlow::Exit,
                 _ => (),
             },
-            winit::event::Event::DeviceEvent { event, .. } => (),
+            winit::event::Event::DeviceEvent { event, .. } => {
+                camera.input(&event)
+            }
             winit::event::Event::MainEventsCleared => {
                 let elapsed = time.elapsed();
                 if elapsed >= target_framerate {
@@ -67,6 +90,17 @@ fn main() {
                 }
             }
             winit::event::Event::RedrawRequested(_) => {
+                // UPDATE
+                camera.update();
+
+                let mat: &[[f32; 4]; 4] = &camera.update_global_matrix().into();
+                gfx.queue.write_buffer(
+                    &reqs.matrix_buffer,
+                    0,
+                    bytemuck::cast_slice(mat),
+                );
+
+                // RENDER
                 let frame = gfx.surface.get_current_texture().unwrap();
                 let view = frame
                     .texture
@@ -104,7 +138,11 @@ fn main() {
                     );
 
                     rpass.set_pipeline(&pipeline1);
-                    rpass.draw(0..4, 0..todo!());
+
+                    rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    rpass.set_bind_group(0, &reqs.bind_group, &[]);
+
+                    rpass.draw(0..4, 0..vertices);
                 }
 
                 gfx.queue.submit(Some(encoder.finish()));

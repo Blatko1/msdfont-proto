@@ -1,16 +1,23 @@
 struct VertexInput {
     @builtin(vertex_index) vertex_index: u32,
-    @location(0) top_left: vec3<f32>;
-    @location(1) bottom_right: vec2<f32>;
-    @location(2) tex_top_left: vec2<f32>;
-    @location(3) tex_bottom_right: vec2<f32>;
+    @location(0) top_left: vec3<f32>,
+    @location(1) bottom_right: vec2<f32>,
+    @location(2) tex_top_left: vec2<f32>,
+    @location(3) tex_bottom_right: vec2<f32>,
 }
 
 struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>;
-    @location(0) tex_pos: vec2<f32>;
-    @location(1) color: vec3<f32>;
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) tex_pos: vec2<f32>,
+    @location(1) color: vec3<f32>,
 }
+
+struct Matrix {
+    v: mat4x4<f32>,
+}
+
+@group(0) @binding(2)
+var<uniform> global: Matrix;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -46,12 +53,29 @@ fn vs_main(in: VertexInput) -> VertexOutput {
         default: {}
     }
 
-    out.clip_position = vec4<f32>(pos, in.top_left.z, 1.0);
+    out.clip_position = global.v * vec4<f32>(pos, in.top_left.z, 1.0);
     out.color = vec3<f32>(0.7, 0.2, 0.1);
 
+    return out;
 }
 
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(in.color, 1.0);
+@group(0) @binding(0)
+var texture: texture_2d<f32>;
+@group(0) @binding(1)
+var tex_sampler: sampler;
+
+fn median(r: f32, g: f32, b: f32) -> f32 {
+    return max(min(r, g), min(max(r, g), b));
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    let texel = textureSample(texture, tex_sampler, in.tex_pos);
+    let dist = median(texel.r, texel.g, texel.b) - 0.5;
+
+    if texel.a < 0.5 {
+        discard;
+    }
+
+    return vec4<f32>(0.8, 0.4 ,0.1, 1.0);
 }
