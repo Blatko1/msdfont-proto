@@ -68,14 +68,37 @@ fn median(r: f32, g: f32, b: f32) -> f32 {
     return max(min(r, g), min(max(r, g), b));
 }
 
+fn screenPxRange(texCoord: vec2<f32>) -> f32 {
+    let unitRange = vec2<f32>(4.0) / vec2<f32>(textureDimensions(texture));
+    let screenTexSize = vec2<f32>(1.0) / fwidth(texCoord);
+    return max(0.5 * dot(unitRange, screenTexSize), 1.0);
+}
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let texel = textureSample(texture, tex_sampler, in.tex_pos);
     let dist = median(texel.r, texel.g, texel.b) - 0.5;
 
-    if texel.a < 0.5 {
-        discard;
-    }
+    var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
+    var bg_color = vec4<f32>(0.3, 0.2, 0.1, 0.0);
 
-    return vec4<f32>(0.8, 0.4 ,0.1, 1.0);
+    //////////////////// BEST METHOD ////////////////////
+    let pixelDist = screenPxRange(in.tex_pos) * dist;
+    let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
+
+    ///////////// ANTI-ALIASING A BIT BROKEN /////////////
+    //let d = dist * dot(vec2<f32>(4.0), vec2<f32>(0.5) / fwidth(in.tex_pos));
+    //let alpha = clamp(dist/fwidth(dist) + 0.5, 0.0, 1.0);
+    //let alpha = clamp(d + 0.5, 0.0, 1.0);
+
+    //////////////////// TESTING ////////////////////
+    //let size = textureDimensions(texture);
+    //let w = fwidth(in.tex_pos);
+    //let tex = vec2<f32>(1.0) / w;
+
+    //if fwidth(dist) > 0.07 {
+    //    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+    //}
+
+    return mix(bg_color, fg_color, alpha);
 }
