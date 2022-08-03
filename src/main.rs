@@ -30,18 +30,23 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
+    //////////////////////////// TTF PARSING - TODO /////////////////////////////////
+    //let font_data = include_bytes!("../fonts/monserat.ttf");
+    //let face = ttf_parser::from_slice(&font_data);
+
     ///////////// Initialize GPU, MSDF font and other prerequisites. //////////
     let mut gfx = block_on(Graphics::new(&window)).unwrap();
     let arfont = artery_font::ArteryFont::read(
         &include_bytes!("../fonts/font.arfont")[..],
     )
     .unwrap();
+    println!("em: {}", arfont.variants.first().unwrap().metrics.em_size);
     let mut camera = Camera::new(&gfx);
     let reqs = Requisites::init(&gfx, &arfont);
 
     let pipeline1 = util::pipeline1(&gfx, &reqs);
 
-    let text = Text::new("TEST", (0.0, 0.0, 0.0));
+    let text = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
     let (vertex_buffer, vertices) = text.create_buffer(&gfx, &reqs.glyphs);
 
     /////////////////////////////// LOOP ///////////////////////////////////////

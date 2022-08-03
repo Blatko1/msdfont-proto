@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use artery_font::ArteryFont;
-use wgpu::util::DeviceExt;
 
-use crate::{camera::Camera, text::Glyph, Graphics};
+use crate::{text::Glyph, Graphics};
 
 pub struct Requisites {
     pub atlas_texture: wgpu::Texture,
@@ -22,6 +21,13 @@ impl Requisites {
         let image = arfont.images.first().unwrap();
         let image_data = &image.data;
         let variants = arfont.variants.first().unwrap();
+        let texels = image.width * image.height;
+
+        //////// INSERT MISSING Alpha Channel IF THE TEXTURE IS RGB ////////
+        //let mut image_data = image_data.clone();
+        //for v in 1..=texels {
+        //    image_data.insert((v * 4 - 1) as usize, 0);
+        //}
 
         let mut glyphs: HashMap<u32, Glyph> = HashMap::new();
         for g in &variants.glyphs {
