@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 
 use camera::Camera;
 use pollster::block_on;
+use rusttype::Font;
 use text::Text;
 use util::Requisites;
 use winit::{
@@ -14,6 +15,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+
+use crate::util::Shape;
 
 const FPS: f64 = 60.0;
 
@@ -30,9 +33,13 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    //////////////////////////// TTF PARSING - TODO /////////////////////////////////
-    //let font_data = include_bytes!("../fonts/monserat.ttf");
-    //let face = ttf_parser::from_slice(&font_data);
+    //////////////////////////// RUSTTYPE - TODO /////////////////////////////////
+    let data = include_bytes!("../fonts/monserat.ttf");
+    //let face = ttf_parser::from_slice(&data);
+    let font = Font::try_from_bytes(data).unwrap();
+    let glyph = font.glyph('A').scaled(rusttype::Scale::uniform(32.0));
+    let mut shape = Shape::new();
+    glyph.build_outline(&mut shape);
 
     ///////////// Initialize GPU, MSDF font and other prerequisites. //////////
     let mut gfx = block_on(Graphics::new(&window)).unwrap();
@@ -44,10 +51,12 @@ fn main() {
     let mut camera = Camera::new(&gfx);
     let reqs = Requisites::init(&gfx, &arfont);
 
+    let line_pipeline = util::line_pipeline(&gfx, &reqs);
     let pipeline1 = util::pipeline1(&gfx, &reqs);
 
     let text = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
     let (vertex_buffer, vertices) = text.create_buffer(&gfx, &reqs.glyphs);
+    let (line_vertex_buffer, line_vertices) = shape.vertex_buffer(&gfx);
 
     /////////////////////////////// LOOP ///////////////////////////////////////
     let target_framerate = Duration::from_secs_f64(1.0 / FPS);
@@ -148,6 +157,15 @@ fn main() {
                     rpass.set_bind_group(0, &reqs.bind_group, &[]);
 
                     rpass.draw(0..4, 0..vertices);
+
+                    // Lines
+                    rpass.set_pipeline(&line_pipeline);
+
+                    rpass.set_vertex_buffer(0, line_vertex_buffer.slice(..));
+                    rpass.set_bind_group(0, &reqs.bind_group, &[]);
+
+                    rpass.draw(0..line_vertices, 0..1);
+
                 }
 
                 gfx.queue.submit(Some(encoder.finish()));
