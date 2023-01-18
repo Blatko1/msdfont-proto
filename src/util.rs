@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use artery_font::ArteryFont;
 use nalgebra::Point2;
-use rusttype::OutlineBuilder;
+// use rusttype::OutlineBuilder;
 use wgpu::util::DeviceExt;
 
 use crate::{text::Glyph, Graphics};
@@ -213,7 +213,50 @@ pub fn pipeline1(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
         })
 }
 
-pub fn line_pipeline(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
+#[repr(C)]
+#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct Quad {
+    pub top_left: [f32; 3],
+    pub bottom_right: [f32; 2],
+    pub tex_top_left: [f32; 2],
+    pub tex_bottom_right: [f32; 2],
+}
+
+impl Quad {
+    fn buffer_layout() -> wgpu::VertexBufferLayout<'static> {
+        wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Quad>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Instance,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    format: wgpu::VertexFormat::Float32x3,
+                    offset: 0,
+                    shader_location: 0,
+                },
+                wgpu::VertexAttribute {
+                    format: wgpu::VertexFormat::Float32x2,
+                    offset: std::mem::size_of::<[f32; 3]>()
+                        as wgpu::BufferAddress,
+                    shader_location: 1,
+                },
+                wgpu::VertexAttribute {
+                    format: wgpu::VertexFormat::Float32x2,
+                    offset: std::mem::size_of::<[f32; 5]>()
+                        as wgpu::BufferAddress,
+                    shader_location: 2,
+                },
+                wgpu::VertexAttribute {
+                    format: wgpu::VertexFormat::Float32x2,
+                    offset: std::mem::size_of::<[f32; 7]>()
+                        as wgpu::BufferAddress,
+                    shader_location: 3,
+                },
+            ],
+        }
+    }
+}
+
+/* pub fn line_pipeline(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
     let shader = gfx
         .device
         .create_shader_module(wgpu::include_wgsl!("shaders/line.wgsl"));
@@ -366,47 +409,4 @@ impl LineVertex {
             ],
         }
     }
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Quad {
-    pub top_left: [f32; 3],
-    pub bottom_right: [f32; 2],
-    pub tex_top_left: [f32; 2],
-    pub tex_bottom_right: [f32; 2],
-}
-
-impl Quad {
-    fn buffer_layout() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Quad>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x3,
-                    offset: 0,
-                    shader_location: 0,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 3]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 1,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 5]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 2,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: std::mem::size_of::<[f32; 7]>()
-                        as wgpu::BufferAddress,
-                    shader_location: 3,
-                },
-            ],
-        }
-    }
-}
+}*/
