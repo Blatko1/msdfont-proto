@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 
 use camera::Camera;
 use pollster::block_on;
-//use rusttype::Font;
 use text::Text;
 use util::Requisites;
 use winit::{
@@ -16,9 +15,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-// use crate::util::Shape;
-
-const FPS: f64 = 60.0;
+const FPS_CAP: f64 = 60.0;
 
 fn main() {
     if std::env::var("RUST_LOG").is_err() {
@@ -33,33 +30,22 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    //////////////////////////// RUSTTYPE - TODO /////////////////////////////////
-    // let data = include_bytes!("../fonts/monserat.ttf");
-    // //let face = ttf_parser::from_slice(&data);
-    // let font = Font::try_from_bytes(data).unwrap();
-    // let glyph = font.glyph('A').scaled(rusttype::Scale::uniform(32.0));
-    // let mut shape = Shape::new();
-    // glyph.build_outline(&mut shape);
-
-    ///////////// Initialize GPU, MSDF font and other prerequisites. //////////
+    ///////////// Initialize GPU, MSDF font and other preparations. //////////
     let mut gfx = block_on(Graphics::new(&window)).unwrap();
     let arfont = artery_font::ArteryFont::read(
         &include_bytes!("../fonts/font.arfont")[..],
     )
     .unwrap();
-    println!("em: {}", arfont.variants.first().unwrap().metrics.em_size);
     let mut camera = Camera::new(&gfx);
     let reqs = Requisites::init(&gfx, &arfont);
 
-    //let line_pipeline = util::line_pipeline(&gfx, &reqs);
     let pipeline1 = util::pipeline1(&gfx, &reqs);
 
     let text = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
     let (vertex_buffer, vertices) = text.create_buffer(&gfx, &reqs.glyphs);
-    // let (line_vertex_buffer, line_vertices) = shape.vertex_buffer(&gfx);
 
     /////////////////////////////// LOOP ///////////////////////////////////////
-    let target_framerate = Duration::from_secs_f64(1.0 / FPS);
+    let target_framerate = Duration::from_secs_f64(1.0 / FPS_CAP);
     let mut time = Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
@@ -232,7 +218,7 @@ impl Graphics {
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
-            alpha_mode: todo!(),
+            alpha_mode: wgpu::CompositeAlphaMode::Auto,
         };
         surface.configure(&device, &config);
 

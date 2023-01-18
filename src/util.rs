@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
 use artery_font::ArteryFont;
-use nalgebra::Point2;
-// use rusttype::OutlineBuilder;
-use wgpu::util::DeviceExt;
 
 use crate::{text::Glyph, Graphics};
 
@@ -26,7 +23,7 @@ impl Requisites {
         let variants = arfont.variants.first().unwrap();
         let texels = image.width * image.height;
 
-        //////// INSERT MISSING Alpha Channel IF THE TEXTURE IS RGB ////////
+        //////// INSERTS MISSING Alpha Channel IF THE TEXTURE IS RGB ////////
         //let mut image_data = image_data.clone();
         //for v in 1..=texels {
         //    image_data.insert((v * 4 - 1) as usize, 0);
@@ -255,158 +252,3 @@ impl Quad {
         }
     }
 }
-
-/* pub fn line_pipeline(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
-    let shader = gfx
-        .device
-        .create_shader_module(wgpu::include_wgsl!("shaders/line.wgsl"));
-    let layout =
-        gfx.device
-            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Line Render Pipeline Layout"),
-                bind_group_layouts: &[&reqs.bind_group_layout],
-                push_constant_ranges: &[],
-            });
-    gfx.device
-        .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Line Render Pipeline"),
-            layout: Some(&layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[LineVertex::buffer_layout()],
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::LineList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Cw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                ..Default::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: gfx.config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            multiview: None,
-        })
-}
-
-pub struct Shape {
-    segments: Vec<Segment>
-}
-
-impl Shape {
-    pub fn new() -> Self {
-        Self { segments: Vec::new() }
-    }
-
-    pub fn vertex_buffer(&self, gfx: &Graphics) -> (wgpu::Buffer, u32) {
-        let mut result = Vec::new();
-        for seg in &self.segments {
-            match seg {
-                Segment::Start(p) => result.push(LineVertex {
-                    pos: [p.x, p.y],
-                }),
-                Segment::LineTo(p) => result.push(LineVertex {
-                    pos: [p.x, p.y],
-                }),
-                Segment::QuadraticTo(quad) => result.push(LineVertex {
-                    pos: [quad.to.x, quad.to.y],
-                }),
-                Segment::CubicTo(cubic) => result.push(LineVertex {
-                    pos: [cubic.to.x, cubic.to.y],
-                }),
-                Segment::End => (),
-            }
-        }
-
-        (gfx.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Shape Buffer"),
-            contents: bytemuck::cast_slice(&result),
-            usage: wgpu::BufferUsages::VERTEX,
-        }), result.len() as u32)
-    }
-}
-
-impl OutlineBuilder for Shape {
-    fn move_to(&mut self, x: f32, y: f32) {
-        self.segments.push(Segment::Start(Point::new(x, y)))
-    }
-
-    fn line_to(&mut self, x: f32, y: f32) {
-        self.segments.push(Segment::LineTo(Point::new(x, y)));
-        println!("line: {} {}", x, y);
-    }
-
-    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-        self.segments.push(Segment::QuadraticTo(
-            Quadratic {
-                control: Point::new(x1, y1),
-                to: Point::new(x, y),
-            }
-        ))
-    }
-
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-        self.segments.push(Segment::CubicTo(Cubic {
-            contol1: Point::new(x1, y1),
-            contol2: Point::new(x2, y2),
-            to: Point::new(x, y),
-        }))
-    }
-
-    fn close(&mut self) {
-        self.segments.push(Segment::End)
-    }
-}
-
-type Point = Point2<f32>;
-
-pub enum Segment {
-    Start(Point),
-    LineTo(Point),
-    QuadraticTo(Quadratic),
-    CubicTo(Cubic),
-    End
-}
-
-pub struct Quadratic {
-    control: Point,
-    to: Point
-}
-
-pub struct Cubic {
-    contol1: Point,
-    contol2: Point,
-    to: Point
-}
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct LineVertex {
-    pub pos: [f32; 2]
-}
-
-impl LineVertex {
-    fn buffer_layout() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<LineVertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: 0,
-                    shader_location: 0,
-                }
-            ],
-        }
-    }
-}*/
