@@ -30,7 +30,7 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    ///////////// Initialize GPU, MSDF font and other preparations. //////////
+    /////////// Initialize GPU, MSDF font and other preparations. ///////////
     let mut gfx = block_on(Graphics::new(&window)).unwrap();
     let arfont = artery_font::ArteryFont::read(
         &include_bytes!("../fonts/font.arfont")[..],
@@ -40,9 +40,15 @@ fn main() {
     let reqs = Requisites::init(&gfx, &arfont);
 
     let pipeline1 = util::pipeline1(&gfx, &reqs);
+    let pipeline2 = util::pipeline2(&gfx, &reqs);
+    let pipeline3 = util::pipeline3(&gfx, &reqs);
 
-    let text = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
-    let (vertex_buffer, vertices) = text.create_buffer(&gfx, &reqs.glyphs);
+    let text1 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
+    let (vertex_buffer1, vertices1) = text1.create_buffer(&gfx, &reqs.glyphs);
+    let text2 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, -1.5, 0.0));
+    let (vertex_buffer2, vertices2) = text2.create_buffer(&gfx, &reqs.glyphs);
+    let text3 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, -3.0, 0.0));
+    let (vertex_buffer3, vertices3) = text3.create_buffer(&gfx, &reqs.glyphs);
 
     /////////////////////////////// LOOP ///////////////////////////////////////
     let target_framerate = Duration::from_secs_f64(1.0 / FPS_CAP);
@@ -137,12 +143,29 @@ fn main() {
                         },
                     );
 
+                    // AA Broken method
                     rpass.set_pipeline(&pipeline1);
 
-                    rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    rpass.set_vertex_buffer(0, vertex_buffer1.slice(..));
                     rpass.set_bind_group(0, &reqs.bind_group, &[]);
 
-                    rpass.draw(0..4, 0..vertices);
+                    rpass.draw(0..4, 0..vertices1);
+
+                    // Cheap method
+                    rpass.set_pipeline(&pipeline2);
+
+                    rpass.set_vertex_buffer(0, vertex_buffer2.slice(..));
+                    rpass.set_bind_group(0, &reqs.bind_group, &[]);
+
+                    rpass.draw(0..4, 0..vertices2);
+
+                    // Best method
+                    rpass.set_pipeline(&pipeline3);
+
+                    rpass.set_vertex_buffer(0, vertex_buffer3.slice(..));
+                    rpass.set_bind_group(0, &reqs.bind_group, &[]);
+
+                    rpass.draw(0..4, 0..vertices3);
 
                     // Lines
                     //rpass.set_pipeline(&line_pipeline);

@@ -106,7 +106,7 @@ pub struct CameraController {
 impl CameraController {
     pub fn new() -> Self {
         CameraController {
-            speed: 0.04,
+            speed: 0.08,
             sensitivity: 0.1,
             forward: 0.0,
             backward: 0.0,
