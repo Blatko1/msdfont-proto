@@ -42,6 +42,7 @@ fn main() {
     let pipeline1 = util::pipeline1(&gfx, &reqs);
     let pipeline2 = util::pipeline2(&gfx, &reqs);
     let pipeline3 = util::pipeline3(&gfx, &reqs);
+    let pipeline4 = util::pipeline4(&gfx, &reqs);
 
     let text1 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 0.0, 0.0));
     let (vertex_buffer1, vertices1) = text1.create_buffer(&gfx, &reqs.glyphs);
@@ -49,6 +50,8 @@ fn main() {
     let (vertex_buffer2, vertices2) = text2.create_buffer(&gfx, &reqs.glyphs);
     let text3 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, -3.0, 0.0));
     let (vertex_buffer3, vertices3) = text3.create_buffer(&gfx, &reqs.glyphs);
+    let text4 = Text::new("TEST Aabcdefghijklmnoprstuvz", (0.0, 1.0, 0.0));
+    let (vertex_buffer4, vertices4) = text4.create_buffer(&gfx, &reqs.glyphs);
 
     /////////////////////////////// LOOP ///////////////////////////////////////
     let target_framerate = Duration::from_secs_f64(1.0 / FPS_CAP);
@@ -142,6 +145,14 @@ fn main() {
                             depth_stencil_attachment: None,
                         },
                     );
+
+                    // Best method
+                    rpass.set_pipeline(&pipeline4);
+
+                    rpass.set_vertex_buffer(0, vertex_buffer4.slice(..));
+                    rpass.set_bind_group(0, &reqs.bind_group, &[]);
+                    
+                    rpass.draw(0..4, 0..vertices4);
 
                     // AA Broken method
                     rpass.set_pipeline(&pipeline1);

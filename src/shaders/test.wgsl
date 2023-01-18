@@ -76,38 +76,23 @@ fn screenPxRange(texCoord: vec2<f32>) -> f32 {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    var weight: f32 = - 0.1;
+
     let texel = textureSample(texture, tex_sampler, in.tex_pos).rgba;
-    let dist = median(texel.r, texel.g, texel.b) - 0.5;
+    let dist = median(texel.r, texel.g, texel.b) + weight - 0.5;
 
     var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
     var bg_color = vec4<f32>(0.3, 0.2, 0.1, 0.0);
 
-    //////////////////// BEST METHOD ////////////////////
+    //////////////////// TESTING /////////////////////////
     let pixelDist = screenPxRange(in.tex_pos) * dist;
     let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
-
-    ///////////// ANTI-ALIASING A BIT BROKEN /////////////
-    //let d = dist * dot(vec2<f32>(4.0), vec2<f32>(0.5) / fwidth(in.tex_pos));
-    //let alpha = clamp(dist/fwidth(dist) + 0.5, 0.0, 1.0);
-    //let alpha = clamp(d + 0.5, 0.0, 1.0);
-
-    ///////////////////// CHEAP METHOD ///////////////////
-    //let afwidth = dist / fwidth(dist);
-    //let alpha = clamp(afwidth + 0.5, 0.0, 1.0);
-
-    //////////////////// TESTING /////////////////////////
-    //let size = textureDimensions(texture);
-    //let w = fwidth(in.tex_pos);
-    //let tex = vec2<f32>(1.0) / w;
-
-    //if fwidth(dist) > 0.07 {
-    //    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
-    //}
 
     ////////////// JUST SDF (only alpha channel) /////////////
     //let alpha = smoothstep(0.5, 0.55, texel);
 
     //////////////////// GAMMA CORRECTION /////////////////
+
     let gamma = 2.2;
     let alpha = pow(fg_color.a * alpha, 1.0 / gamma);
 

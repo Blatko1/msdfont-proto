@@ -77,14 +77,15 @@ fn screenPxRange(texCoord: vec2<f32>) -> f32 {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let texel = textureSample(texture, tex_sampler, in.tex_pos).rgba;
-    let dist = median(texel.r, texel.g, texel.b) - 0.5;
+    let dist = median(texel.r, texel.g, texel.b);
 
     var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
     var bg_color = vec4<f32>(0.3, 0.2, 0.1, 0.0);
 
     //////////////////// BEST METHOD ////////////////////
-    let pixelDist = screenPxRange(in.tex_pos) * dist;
-    let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
+    let pixelDist = screenPxRange(in.tex_pos) * (dist - 0.5);
+    let alpha = smoothstep(0.0, 1.0, pixelDist + 0.5);
+    //let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
 
     //////////////////// GAMMA CORRECTION /////////////////
     let gamma = 2.2;
