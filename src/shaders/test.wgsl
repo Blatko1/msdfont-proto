@@ -76,16 +76,18 @@ fn screenPxRange(texCoord: vec2<f32>) -> f32 {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var weight: f32 = - 0.1;
+    var weight: f32 = - 0.05;
 
     let texel = textureSample(texture, tex_sampler, in.tex_pos).rgba;
-    let dist = median(texel.r, texel.g, texel.b) + weight - 0.5;
+    let dist = median(texel.r, texel.g, texel.b) - 0.5;
 
     var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
     var bg_color = vec4<f32>(0.3, 0.2, 0.1, 0.0);
 
+    let distance = dist + weight;
+
     //////////////////// TESTING /////////////////////////
-    let pixelDist = screenPxRange(in.tex_pos) * dist;
+    let pixelDist = screenPxRange(in.tex_pos) * distance;
     let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
 
     ////////////// JUST SDF (only alpha channel) /////////////
