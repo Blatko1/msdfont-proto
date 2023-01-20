@@ -84,12 +84,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     //////////////////// BEST METHOD ////////////////////
     let pixelDist = screenPxRange(in.tex_pos) * (dist - 0.5);
-    let alpha = smoothstep(0.0, 1.0, pixelDist + 0.5);
-    //let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
+    //let alpha = smoothstep(0.0, 1.0, pixelDist + 0.5);
+    let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
 
     //////////////////// GAMMA CORRECTION /////////////////
     let gamma = 2.2;
-    let alpha = pow(fg_color.a * alpha, 1.0 / gamma);
+    let alpha = pow(alpha, 1.0 / gamma);
 
     return mix(bg_color, fg_color, alpha);
 }
