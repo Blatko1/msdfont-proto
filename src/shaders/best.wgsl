@@ -69,7 +69,7 @@ fn median(r: f32, g: f32, b: f32) -> f32 {
 }
 
 fn screenPxRange(texCoord: vec2<f32>) -> f32 {
-    let unitRange = vec2<f32>(4.0) / vec2<f32>(textureDimensions(texture));
+    let unitRange = vec2<f32>(6.0) / vec2<f32>(textureDimensions(texture));
     let screenTexSize = vec2<f32>(1.0) / fwidth(texCoord);
     return max(0.5 * dot(unitRange, screenTexSize), 1.0);
 }
@@ -84,12 +84,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     //////////////////// BEST METHOD ////////////////////
     let pixelDist = screenPxRange(in.tex_pos) * (dist - 0.5);
-    let alpha = smoothstep(0.0, 1.0, pixelDist + 0.5);
-    //let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
+    //let alpha = smoothstep(0.0, 1.0, pixelDist + 0.5);
+    let alpha = clamp(pixelDist + 0.5, 0.0, 1.0);
 
     //////////////////// GAMMA CORRECTION /////////////////
     let gamma = 2.2;
-    let alpha = pow(fg_color.a * alpha, 1.0 / gamma);
+    let alpha = pow(alpha, 1.0 / gamma);
 
     return mix(bg_color, fg_color, alpha);
 }

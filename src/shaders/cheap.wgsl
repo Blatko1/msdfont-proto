@@ -82,7 +82,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     //////////////////// GAMMA CORRECTION /////////////////
     let gamma = 2.2;
-    let alpha = pow(fg_color.a * alpha, 1.0 / gamma);
+    let alpha = pow(alpha, 1.0 / gamma);
 
     return mix(bg_color, fg_color, alpha);
 }
