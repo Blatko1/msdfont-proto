@@ -69,7 +69,7 @@ fn median(r: f32, g: f32, b: f32) -> f32 {
 }
 
 fn screenPxRange(texCoord: vec2<f32>) -> f32 {
-    let unitRange = vec2<f32>(4.0) / vec2<f32>(textureDimensions(texture));
+    let unitRange = vec2<f32>(6.0) / vec2<f32>(textureDimensions(texture));
     let screenTexSize = vec2<f32>(1.0) / fwidth(texCoord);
     return max(0.5 * dot(unitRange, screenTexSize), 1.0);
 }

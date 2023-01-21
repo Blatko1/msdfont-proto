@@ -70,15 +70,18 @@ fn median(r: f32, g: f32, b: f32) -> f32 {
 
 // Bigger the text, bigger the screenPxRange.
 fn screenPxRange(texCoord: vec2<f32>) -> f32 {
-    let unitRange = vec2<f32>(4.0) / vec2<f32>(textureDimensions(texture));
+    let unitRange = vec2<f32>(6.0) / vec2<f32>(textureDimensions(texture));
     let screenTexSize = vec2<f32>(1.0) / fwidth(texCoord);
     return max(0.5 * dot(unitRange, screenTexSize), 1.0);
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    let outline_thickness = 0.3;
+    let thickness = 0.0;
+
     let texel = textureSample(texture, tex_sampler, in.tex_pos).rgba;
-    let d = median(texel.r, texel.g, texel.b) - 0.5;
+    let d = median(texel.r, texel.g, texel.b) - 0.5 + thickness;
     let px_range = screenPxRange(in.tex_pos);
 
     var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
@@ -86,14 +89,13 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     var outline_color = vec4<f32>(0.9, 0.2, 0.3, 0.8);
 
     ///////////////////////// TESTING /////////////////////////
-    //let od = clamp(d, 0.45, 0.55) - 0.5;
-    let od = d - 0.3;
-    let outline = clamp(od * px_range + 0.5, 0.0, 1.0);
+    let opacity = clamp(d * px_range + 0.5, 0.0, 1.0);
+    
+    let od = d + outline_thickness;
+    let outline_d = smoothstep(od * px_range + 0.5, 0.0, 1.0);
+    //let outline_d = clamp(od * px_range + 0.5, 0.0, 1.0);
 
-    let td = d;
-    let body = clamp(td * px_range + 0.5, 0.0, 1.0);
-
-    let alpha = body - outline;
+    let outline_alpha = outline_d - opacity;
 
     //let pixel_dist = px_range * dist;
     //let alpha = clamp(pixel_dist + 0.5, 0.0, 1.0);
@@ -109,5 +111,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     //let color = vec4<f32>(mix(outline_color, fg_color, alpha).rgb, alpha);
     //let color = vec4<f32>(mix(outline_color.rgb, fg_color.rgb, body_alpha), alpha);
 
-    return mix(outline_color, fg_color, alpha);
+    //return vec4<f32>(mix(outline_color.rgb, fg_color.rgb, opacity), outline_alpha + opacity);
+
+    return vec4<f32>(mix(fg_color.rgb, outline_color.rgb, in.tex_pos.y), opacity);
 }
