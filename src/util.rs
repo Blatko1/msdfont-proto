@@ -171,6 +171,90 @@ impl Requisites {
 pub fn pipeline1(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
     let shader = gfx
         .device
+        .create_shader_module(wgpu::include_wgsl!("shaders/test2.wgsl"));
+    let layout =
+        gfx.device
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline 1 Layout test"),
+                bind_group_layouts: &[&reqs.bind_group_layout],
+                push_constant_ranges: &[],
+            });
+    gfx.device
+        .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline 1 test"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[Quad::buffer_layout()],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleStrip,
+                strip_index_format: Some(wgpu::IndexFormat::Uint16),
+                front_face: wgpu::FrontFace::Cw,
+                cull_mode: Some(wgpu::Face::Back),
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: gfx.config.format,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            multiview: None,
+        })
+}
+
+pub fn pipeline2(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
+    let shader = gfx
+        .device
+        .create_shader_module(wgpu::include_wgsl!("shaders/test1.wgsl"));
+    let layout =
+        gfx.device
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline 1 Layout test"),
+                bind_group_layouts: &[&reqs.bind_group_layout],
+                push_constant_ranges: &[],
+            });
+    gfx.device
+        .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("Render Pipeline 1 test"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[Quad::buffer_layout()],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleStrip,
+                strip_index_format: Some(wgpu::IndexFormat::Uint16),
+                front_face: wgpu::FrontFace::Cw,
+                cull_mode: Some(wgpu::Face::Back),
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: gfx.config.format,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            multiview: None,
+        })
+}
+
+pub fn pipeline3(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
+    let shader = gfx
+        .device
         .create_shader_module(wgpu::include_wgsl!("shaders/cheap.wgsl"));
     let layout =
         gfx.device
@@ -210,7 +294,7 @@ pub fn pipeline1(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
         })
 }
 
-pub fn pipeline2(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
+pub fn pipeline4(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
     let shader = gfx
         .device
         .create_shader_module(wgpu::include_wgsl!("shaders/best.wgsl"));
@@ -224,48 +308,6 @@ pub fn pipeline2(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
     gfx.device
         .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline 1 Best"),
-            layout: Some(&layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[Quad::buffer_layout()],
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleStrip,
-                strip_index_format: Some(wgpu::IndexFormat::Uint16),
-                front_face: wgpu::FrontFace::Cw,
-                cull_mode: Some(wgpu::Face::Back),
-                ..Default::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: gfx.config.format,
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            multiview: None,
-        })
-}
-
-pub fn pipeline3(gfx: &Graphics, reqs: &Requisites) -> wgpu::RenderPipeline {
-    let shader = gfx
-        .device
-        .create_shader_module(wgpu::include_wgsl!("shaders/test.wgsl"));
-    let layout =
-        gfx.device
-            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline 1 Layout test"),
-                bind_group_layouts: &[&reqs.bind_group_layout],
-                push_constant_ranges: &[],
-            });
-    gfx.device
-        .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline 1 test"),
             layout: Some(&layout),
             vertex: wgpu::VertexState {
                 module: &shader,
