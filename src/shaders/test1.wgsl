@@ -77,28 +77,33 @@ fn screenPxRange(texCoord: vec2<f32>) -> f32 {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let outline_thickness = 0.0;
-    let thickness = 0.1;
+    // variables
+    let outline_thickness = 0.0;    // 0.0 - 0.5
+    let thickness = 0.0;    // 0.0 - 0.5
+    let softness = 0.3;     
 
+    // current texel, current distance, 
+    // screen pixel range factor used for scaling the distance for valid anti-aliasing
     let texel = textureSample(texture, tex_sampler, in.tex_pos).rgba;
-    let d = median(texel.r, texel.g, texel.b);
+    let d = median(texel.r, texel.g, texel.b) - 0.5 + thickness;
     let px_range = screenPxRange(in.tex_pos);
 
     var fg_color = vec4<f32>(0.8, 0.4, 0.1, 1.0);
     var bg_color = vec4<f32>(0.3, 0.2, 0.9, 0.3);
     var outline_color = vec4<f32>(0.9, 0.2, 0.3, 0.8);
 
-    ///////////////////////// TESTING /////////////////////////
-    //let opacity = clamp(d * px_range + 0.5, 0.0, 1.0);
-    let inside = smoothstep(-0.2, 0.2, d - 0.5);
-    let px_dist = d * px_range * inside;
-    //let opacity = smoothstep(0.0, 1.0, px_dist + 0.5);
-    let opacity = clamp(px_dist, 0.0, 1.0);
-    
-    //let od = d + outline_thickness;
-    //let outline_d = clamp(od * px_range + 0.5, 0.0, 1.0);
+    // Body opacity
+    let px_dist = d * px_range;
 
-    //let outline_alpha = outline_d - opacity;
+    //let opacity = clamp(px_dist + 0.5 - thickness, 0.0, 1.0);
+    let opacity = smoothstep(0.5 - thickness - softness * px_range, 0.5 - thickness + softness * px_range, px_dist + 0.5 - thickness);
+
+    // Outline opacity
+    let o_px_dist = (d + outline_thickness) * px_range;
+
+    let filled_opacity = clamp(o_px_dist + 0.5 - thickness - outline_thickness, 0.0, 1.0);
+
+    let outline = filled_opacity - opacity;
 
     //let pixel_dist = px_range * dist;
     //let alpha = clamp(pixel_dist + 0.5, 0.0, 1.0);
@@ -106,15 +111,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     ////////////// JUST SDF (only alpha channel) /////////////
     //let alpha = smoothstep(0.5, 0.55, texel);
 
-    //////////////////// GAMMA CORRECTION /////////////////
-
-    //let gamma = 2.2;
-    //let alpha = pow(/*fg_color.a * */opacity, 1.0 / gamma);
-
     //let color = vec4<f32>(mix(outline_color, fg_color, alpha).rgb, alpha);
     //let color = vec4<f32>(mix(outline_color.rgb, fg_color.rgb, body_alpha), alpha);
 
     //return vec4<f32>(mix(outline_color.rgb, fg_color.rgb, opacity), outline_alpha + opacity);
+    let color = fg_color.rgb;
+    let alpha = opacity;
 
-    return vec4<f32>(fg_color.rgb, opacity);
+    //////////////////// GAMMA CORRECTION /////////////////
+    let gamma = 2.2;
+    let corrected_alpha = pow(alpha, 1.0 / gamma);
+
+    return vec4<f32>(color, corrected_alpha);
 }

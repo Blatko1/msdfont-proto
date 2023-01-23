@@ -96,7 +96,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let fade = smoothstep(thickness - softness, thickness + softness, d);
     let px_dist = d * px_range;
 
-    let opacity = clamp(px_dist + 0.5 - thickness, 0.0, 1.0);
+    //let opacity = clamp(px_dist + 0.5 - thickness, 0.0, 1.0);
+    let opacity = smoothstep(0.0, 2.0, px_dist + 0.5 - thickness);
     
     // Outline opacity
     let o_px_dist = (d + outline_thickness) * px_range;
